@@ -19,7 +19,7 @@ connection.connect(function (err) {
 function runSearch() {
     inquirer
         .prompt([{
-                name: "prduct_ID",
+                name: "product_ID",
                 type: "",
                 message: "What ID of the product would you like to buy?"
             },
@@ -31,17 +31,25 @@ function runSearch() {
             }
         ])
         .then(function (answer) {
-                switch (answer.action) {}
-                console.log(answer)
-            
-            var query = "select * from products where stock_quantity > 0;"
-            connection.query(query, function(err, result){
-                console.log (result)
-            
+            console.log(answer);
+
+            var query = "select id, price, stock_quantity from products where id = " + answer.product_ID +  " and stock_quantity > " + answer.unit;
+
+            connection.query(query, function (err, results) {
+                if (results.length === 0) {
+                    console.log("Sorry, insufficient quantity. Try again...");
+                } else {
+                    console.log(results);
+                    var unitsLeft = results[0].stock_quantity - answer.unit;
+                    connection.query(`UPDATE products SET stock_quantity=${unitsLeft} WHERE id=${answer.product_ID}`, function (err, res) {
+                        var userTotal = answer.unit * results[0].price;
+                        console.log(`Thank you for purchasing!  Your total is: $${userTotal}`);
+                    });
+                }
+                
+                connection.query(`select * from products where id=${answer.product_ID}`, function (err, results) {
+                    console.log(results);
             });
-            
-            // prompt({
-            //     "How many units of the product would you like to buy?"
-            // })
-        })
+        });
+    });
 }
